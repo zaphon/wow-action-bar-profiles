@@ -74,8 +74,6 @@ L["gui_profile_name"] = "Introducir nombre de perfil (máximo de 16 caracteres)"
 --[[Translation missing --]]
 --[[ L["option_talents"] = ""--]] 
 --[[Translation missing --]]
---[[ L["option_pvp_talents"] = ""--]] 
---[[Translation missing --]]
 --[[ L["tooltip_list"] = ""--]] 
 --[[Translation missing --]]
 --[[ L["tooltip_list_empty"] = ""--]] 

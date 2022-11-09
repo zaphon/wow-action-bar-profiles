@@ -3,12 +3,9 @@ local addonName = ...
 local L = LibStub("AceLocale-3.0"):NewLocale(addonName, "esES", false)
 if not L then return end
 
---[[Translation missing --]]
---[[ L["cfg_minimap_icon"] = ""--]] 
---[[Translation missing --]]
---[[ L["cfg_replace_macros"] = ""--]] 
---[[Translation missing --]]
---[[ L["cfg_settings"] = ""--]] 
+L["cfg_minimap_icon"] = "Icono del minimapa"
+L["cfg_replace_macros"] = "Remplaza todos los macros existentes al cambiar perfil"
+L["cfg_settings"] = "Ajustes"
 L["charframe_tab"] = "Barras de acción"
 --[[Translation missing --]]
 --[[ L["chat_share_invite"] = ""--]] 
@@ -73,8 +70,6 @@ L["gui_profile_name"] = "Introducir nombre de perfil (máximo de 16 caracteres)"
 --[[ L["option_pet_actions"] = ""--]] 
 --[[Translation missing --]]
 --[[ L["option_talents"] = ""--]] 
---[[Translation missing --]]
---[[ L["option_pvp_talents"] = ""--]] 
 --[[Translation missing --]]
 --[[ L["tooltip_list"] = ""--]] 
 --[[Translation missing --]]

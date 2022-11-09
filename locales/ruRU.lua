@@ -44,7 +44,6 @@ L["option_empty_slots"] = "Пустые слоты"
 L["option_macros"] = "Макросы"
 L["option_pet_actions"] = "Управление питомцем"
 L["option_talents"] = "Таланты"
-L["option_pvp_talents"] = "PvP Таланты"
 L["tooltip_list"] = "Доступные профили:"
 L["tooltip_list_empty"] = "Нет доступных профилей"
 

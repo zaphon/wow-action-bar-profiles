@@ -24,7 +24,8 @@ L["msg_cant_place_item"] = "Gegenstand kann nicht platziert werden: %s"
 L["msg_cant_place_macro"] = "Makro kann nicht platziert werden: %s"
 L["msg_cant_place_spell"] = "Zauber kann nicht platziert werden: %s"
 L["msg_equip_not_exists"] = "Ausrüstungsset nicht gefunden: %s"
-L["msg_found_by_name"] = "nach Namen gefunden: %s"
+--[[Translation missing --]]
+--[[ L["msg_found_by_name"] = ""--]] 
 L["msg_macro_not_exists"] = "Makro nicht gefunden: %s"
 L["msg_pet_not_exists"] = "Kampfhaustier nicht gefunden: %s"
 L["msg_profile_deleted"] = "Profil %s gelöscht"
@@ -42,7 +43,6 @@ L["option_empty_slots"] = "Leere Plätze"
 L["option_macros"] = "Makros"
 L["option_pet_actions"] = "Begleiter- oder Dämonenaktionen"
 L["option_talents"] = "Talente"
-L["option_pvp_talents"] = "PvP Talente"
 L["tooltip_list"] = "Verfügbare Profile:"
 L["tooltip_list_empty"] = "Keine verfügbaren Profile"
 

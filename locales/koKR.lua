@@ -67,8 +67,6 @@ L["option_macros"] = "매크로"
 L["option_pet_actions"] = "소환수 또는 악마 행동 단축바"
 --[[Translation missing --]]
 --[[ L["option_talents"] = ""--]] 
---[[Translation missing --]]
---[[ L["option_pvp_talents"] = ""--]] 
 L["tooltip_list"] = "사용 가능한 프로필:"
 --[[Translation missing --]]
 --[[ L["tooltip_list_empty"] = ""--]] 
