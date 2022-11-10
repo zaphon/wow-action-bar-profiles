@@ -30,7 +30,7 @@ function addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New(addonName .. "DB" .. ABP_DB_VERSION, {
         profile = {
             minimap = {
-                hide = false,
+                hide = true,
             },
             list = {},
             replace_macros = false,
