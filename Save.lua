@@ -273,6 +273,115 @@ function addon:SaveActions(profile)
     profile.macros = macros
 end
 
+function addon:SaveSingleAction(slot)
+    local flyouts, tsNames, tsIds = {}, {}, {}
+
+    local book
+    for book = 1, GetNumSpellTabs() do
+        local offset, count, _, spec = select(3, GetSpellTabInfo(book))
+
+        if spec == 0 then
+            local index
+            for index = offset + 1, offset + count do
+                local type, id = GetSpellBookItemInfo(index, BOOKTYPE_SPELL)
+                local name = GetSpellBookItemName(index, BOOKTYPE_SPELL)
+
+                if type == "FLYOUT" then
+                    flyouts[id] = name
+
+                elseif type == "SPELL" and IsTalentSpell(index, BOOKTYPE_SPELL) then
+                    tsNames[name] = id
+
+                -- in case a PvP Talent ever shows up in a spellbook
+                elseif type == "SPELL" and IsPvpTalentSpell(index, BOOKTYPE_SPELL) then
+                    tsNames[name] = id
+                end
+            end
+        end
+    end
+
+    local talents = {}
+
+    local tier
+    for tier = 1, MAX_TALENT_TIERS do
+        local column = select(2, GetTalentTierInfo(tier, 1))
+        if column and column > 0 then
+            local id, name = GetTalentInfo(tier, column, 1)
+
+            if tsNames[name] then
+                tsIds[tsNames[name]] = id
+            end
+
+            talents[tier] = GetTalentLink(id)
+        end
+    end
+
+    local action
+    local type, id, sub = GetActionInfo(slot)
+    
+    if type == "spell" then
+        if tsIds[id] then
+            action = GetTalentLink(tsIds[id])
+        else
+            action = GetSpellLink(id)
+        end
+
+    elseif type == "flyout" then
+        if flyouts[id] then
+            action = string.format(
+                "|cffff0000|Habp:flyout:%d|h[%s]|h|r",
+                id, flyouts[id]
+            )
+        end
+
+    elseif type == "item" then
+        action = select(2, GetItemInfo(id))
+
+    elseif type == "companion" then
+        if sub == "MOUNT" then
+            action = GetSpellLink(id)
+        end
+
+    elseif type == "summonpet" then
+        action = C_PetJournal.GetBattlePetLink(id)
+
+    elseif type == "summonmount" then
+        if id == 0xFFFFFFF then
+            action = GetSpellLink(ABP_RANDOM_MOUNT_SPELL_ID)
+        else
+            action = GetSpellLink(({ C_MountJournal.GetMountInfoByID(id) })[2])
+        end
+
+    elseif type == "macro" then
+        if id > 0 then
+            local name, icon, body = GetMacroInfo(id)
+
+            icon = icon or ABP_EMPTY_ICON_TEXTURE_ID
+
+            if id > MAX_ACCOUNT_MACROS then
+                action = string.format(
+                    "|cffff0000|Habp:macro:%s:%s|h[%s]|h|r",
+                    icon, self:EncodeLink(body), name
+                )
+            else
+                action = string.format(
+                    "|cffff0000|Habp:macro:%s:%s:1|h[%s]|h|r",
+                    icon, self:EncodeLink(body), name
+                )
+            end
+        elseif id == 0 then
+            addon:ClearSlot(slot)
+        end
+
+    elseif type == "equipmentset" then
+        action = string.format(
+            "|cffff0000|Habp:equip|h[%s]|h|r",
+            id
+        )
+    end
+    return action
+end
+
 function addon:SavePetActions(profile)
     local petActions = nil
 

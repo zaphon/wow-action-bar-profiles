@@ -55,11 +55,11 @@ function addon:UseProfile(profile, check, cache)
     end
 
     if not profile.skipTalents then
-        self:RestoreTalents(profile, check, cache, res)
+        -- self:RestoreTalents(profile, check, cache, res)
     end
 
     if not profile.skipPvpTalents then
-        self:RestorePvpTalents(profile, check, cache, res)
+        -- self:RestorePvpTalents(profile, check, cache, res)
     end
 
     if not profile.skipActions then
@@ -71,7 +71,7 @@ function addon:UseProfile(profile, check, cache)
     end
 
     if not profile.skipBindings then
-        self:RestoreBindings(profile, check, cache, res)
+        -- self:RestoreBindings(profile, check, cache, res)
     end
 
     cache.macros = macros
@@ -383,6 +383,11 @@ function addon:RestoreActions(profile, check, cache, res)
     local slot
     for slot = 1, ABP_MAX_ACTION_BUTTONS do
         local link = profile.actions[slot]
+        if (slot >= 145 and slot <= 156) then
+            if not link then
+                link = profile.actions[slot-132]
+            end
+        end
         if link then
             -- has action
             local ok
@@ -395,7 +400,7 @@ function addon:RestoreActions(profile, check, cache, res)
                 local type, sub, p1, p2, _, _, _, p6 = strsplit(":", data)
                 local id = tonumber(sub)
 
-                if type == "spell" then
+                if type == "spell" or type == "talent" then
                     if id == ABP_RANDOM_MOUNT_SPELL_ID then
                         ok = true
 
@@ -410,18 +415,15 @@ function addon:RestoreActions(profile, check, cache, res)
                             if not check then
                                 self:PlaceSpell(slot, found, link)
                             end
-                        end
-                    end
+                        else
+                            found = self:GetFromCache(cache.talents, id, name, not check and link)
+                            if found then
+                                ok = true
 
-                    self:cPrintf(not ok and not check, L.msg_spell_not_exists, link)
-
-                elseif type == "talent" then
-                    local found = self:GetFromCache(cache.talents, id, name, not check and link)
-                    if found then
-                        ok = true
-
-                        if not check then
-                            self:PlaceTalent(slot, found, link)
+                                if not check then
+                                    self:PlaceTalent(slot, found, link)
+                                end
+                            end
                         end
                     end
 
@@ -559,6 +561,171 @@ function addon:RestoreActions(profile, check, cache, res)
     end
 
     return fail, total
+end
+
+function addon:RestoreSingleAction(action, slot, cache)
+    local fail = 0
+    if action then
+        -- has action
+        local link = action
+        local ok
+
+        local data, name = link:match("^|c.-|H(.-)|h%[(.-)%]|h|r$")
+        link = link:gsub("|Habp:.+|h(%[.+%])|h", "%1")
+
+        if data then
+            local type, sub, p1, p2, _, _, _, p6 = strsplit(":", data)
+            local id = tonumber(sub)
+
+            if type == "spell" or type == "talent" then
+                if id == ABP_RANDOM_MOUNT_SPELL_ID then
+                    ok = true
+
+                    if not check then
+                        self:PlaceMount(slot, 0, link)
+                    end
+                else
+                    local found = self:FindSpellInCache(cache.spells, id, name, not check and link)
+                    if found then
+                        ok = true
+
+                        if not check then
+                            self:PlaceSpell(slot, found, link)
+                        end
+                    else
+                        found = self:GetFromCache(cache.talents, id, name, not check and link)
+                        if found then
+                            ok = true
+
+                            if not check then
+                                self:PlaceTalent(slot, found, link)
+                            end
+                        end
+                    end
+                end
+
+                self:cPrintf(not ok and not check, L.msg_spell_not_exists, link)
+
+            -- almost certain this routine not needed since a pvp talent that is placed on an action bar is recorded on the bar with its spellid rather than its talentid
+            elseif type == "pvptal" then
+                local found = self:GetFromCache(cache.pvpTalents, id, name, not check and link)
+                if found then
+                    ok = true
+
+                    if not check then
+                        self:PlacePvpTalent(slot, found, link)
+                    end
+                end
+
+                self:cPrintf(not ok and not check, L.msg_spell_not_exists, link)
+
+            elseif type == "item" then
+                if PlayerHasToy(id) then
+                    ok = true
+
+                    if not check then
+                        self:PlaceItem(slot, id, link)
+                    end
+                else
+                    local found = self:FindItemInCache(cache.equip, id, name, not check and link)
+                    if found then
+                        ok = true
+
+                        if not check then
+                            self:PlaceInventoryItem(slot, found, link)
+                        end
+                    else
+                        found = self:FindItemInCache(cache.bags, id, name, not check and link)
+                        if found then
+                            ok = true
+
+                            if not check then
+                                self:PlaceContainerItem(slot, found[1], found[2], link)
+                            end
+                        end
+                    end
+                end
+
+                if not ok and not check then
+                    self:PlaceItem(slot, S2KFI:GetConvertedItemId(id) or id, link)
+                end
+
+                ok = true   -- sic!
+
+            elseif type == "battlepet" then
+                local found = self:GetFromCache(cache.pets, p6, id, not check and link)
+                if found then
+                    ok = true
+
+                    if not check then
+                        self:PlacePet(slot, found, link)
+                    end
+                end
+
+                self:cPrintf(not ok and not check, L.msg_pet_not_exists, link)
+
+            elseif type == "abp" then
+                id = tonumber(p1)
+
+                if sub == "flyout" then
+                    local found = self:FindFlyoutInCache(cache.flyouts, id, name, not check and link)
+                    if found then
+                        ok = true
+
+                        if not check then
+                            self:PlaceFlyout(slot, found, BOOKTYPE_SPELL, link)
+                        end
+                    end
+
+                    self:cPrintf(not ok and not check, L.msg_spell_not_exists, link)
+
+                elseif sub == "macro" then
+                    local found = self:GetFromCache(cache.macros, self:PackMacro(self:DecodeLink(p2)), name, not check and link)
+                    if found then
+                        ok = true
+
+                        if not check then
+                            self:PlaceMacro(slot, found, link)
+                        end
+                    end
+
+                    if profile.skipMacros then
+                        self:cPrintf(not ok and not check, L.msg_macro_not_exists, link)
+                    else
+                    end
+
+                elseif sub == "equip" then
+                    if GetEquipmentSetInfoByName(name) then
+                        ok = true
+
+                        if not check then
+                            self:PlaceEquipment(slot, name, link)
+                        end
+                    end
+
+                    self:cPrintf(not ok and not check, L.msg_equip_not_exists, link)
+                else
+                    self:cPrintf(not check, L.msg_bad_link, link)
+                end
+            else
+                self:cPrintf(not check, L.msg_bad_link, link)
+            end
+        else
+            self:cPrintf(not check, L.msg_bad_link, link)
+        end
+
+        if not ok then
+            fail = fail + 1
+            if not profile.skipEmptySlots and not check then
+                self:ClearSlot(slot)
+            end
+        end
+    else
+        if not profile.skipEmptySlots and not check then
+            self:ClearSlot(slot)
+        end
+    end
+    return fail
 end
 
 function addon:RestorePetActions(profile, check, cache, res)
@@ -851,6 +1018,12 @@ function addon:PreloadSpellbook(spells, flyouts)
 
             if type == "FLYOUT" then
                 self:UpdateCache(flyouts, index, id, name)
+                -- Handle FLYOUTS that actually contain spells
+                local name, description, numSlots, isKnown = GetFlyoutInfo(id)
+                for idx = 1, numSlots do
+                    local flyoutid, _, isKnown, spellName, _ = GetFlyoutSlotInfo(id, idx)
+                    self:UpdateCache(spells, flyoutid, flyoutid, spellName)
+                end
 
             elseif type == "SPELL" then
                 self:UpdateCache(spells, id, id, name)
@@ -962,8 +1135,8 @@ function addon:PreloadBags(bags)
     local bag
     for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
         local index
-        for index = 1, GetContainerNumSlots(bag) do
-            local id = GetContainerItemID(bag, index)
+        for index = 1, C_Container.GetContainerNumSlots(bag) do
+            local id = C_Container.GetContainerItemID(bag, index)
             if id then
                 self:UpdateCache(bags, { bag, index }, id, GetItemInfo(id))
             end
@@ -1171,7 +1344,7 @@ function addon:PlaceContainerItem(slot, bag, id, link, count)
     count = count or ABP_PICKUP_RETRY_COUNT
 
     ClearCursor()
-    PickupContainerItem(bag, id)
+    C_Container.PickupContainerItem(bag, id)
 
     if not CursorHasItem() then
         if count > 0 then

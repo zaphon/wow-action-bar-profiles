@@ -10,12 +10,69 @@ local qtip = LibStub("LibQTip-1.0")
 local origGetPaperDollSideBarFrame
 local ABP_tabNum
 
+local CopyAttempts = 0
+
 function ABP_GetPaperDollSideBarFrame(index)
     if index == ABP_tabNum then
         return PaperDollActionBarProfilesPane;
     else
         return origGetPaperDollSideBarFrame(index);
     end
+end
+
+function CopyBar6To13()
+    return addon:CopyBar6To13()
+end
+
+function addon:CopyBar6To13()
+    local player = UnitName("player") .. "-" .. GetRealmName("player") .. "-" .. GetSpecializationInfo(GetSpecialization())
+
+    local found13 = 0
+    local found6 = 0
+    local fail = 0
+
+    if CopyAttempts > 10 then
+        return
+    end
+    CopyAttempts = CopyAttempts + 1
+
+    if self.db.profile.migrated[player] then
+        return
+    end
+
+    for i = 145, 156 do
+        local type, id, sub = GetActionInfo(i)
+        if type ~= nil then
+            found13 = found13 + 1
+        end
+    end
+    for i = 13, 24 do
+        local type, id, sub = GetActionInfo(i)
+        if type ~= nil then
+            found6 = found6 + 1
+        end
+    end
+
+    print("Found6: "..found6)
+    print("Found13: "..found13)
+
+    if found6 > found13 then
+        print("Copying Bars from 6 to 13")
+        local cache = addon:MakeCache()
+        for i = 13, 24 do
+            local action = addon:SaveSingleAction(i)
+            fail = fail + addon:RestoreSingleAction(action, i+132, cache)
+        end
+        if fail == 0 then
+            C_Timer.After(1, function() addon:CopyBar6To13(); end)
+        end
+    else
+        if not self.db.profile.migrated then
+            self.db.profile.migrated = {}
+        end
+        self.db.profile.migrated[player] = true
+    end
+    return
 end
 
 function addon:cPrintf(cond, ...)
@@ -33,6 +90,7 @@ function addon:OnInitialize()
                 hide = true,
             },
             list = {},
+            migrated = {},
             replace_macros = false,
         },
     }, ({ UnitClass("player") })[2])

@@ -3,7 +3,7 @@ ABP_DB_VERSION = "v3"
 ABP_ADDON_NAME = "Action Bar Profiles"
 ABP_DOWNLOAD_LINK = "https://mods.curse.com/addons/wow/action-bar-profiles"
 
-ABP_MAX_ACTION_BUTTONS = 120
+ABP_MAX_ACTION_BUTTONS = 180
 ABP_DEFAULT_PAPERDOLL_NUM_TABS = 3
 
 ABP_PICKUP_RETRY_COUNT = 5
