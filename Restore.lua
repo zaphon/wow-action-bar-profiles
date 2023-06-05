@@ -555,6 +555,10 @@ function addon:RestoreActions(profile, check, cache, res)
         end
     end
 
+    for i = 13, 24 do
+        self:ClearSlot(i)
+    end
+
     if res then
         res.fail = res.fail + fail
         res.total = res.total + total
