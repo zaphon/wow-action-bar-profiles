@@ -20,6 +20,12 @@ function ABP_GetPaperDollSideBarFrame(index)
     end
 end
 
+function ClearBarTwo()
+    for i = 13, 24 do
+        addon:ClearSlot(i)
+    end
+end
+
 function CopyBar6To13()
     return addon:CopyBar6To13()
 end
