@@ -733,7 +733,7 @@ function addon:RestoreSingleAction(action, slot, cache)
 end
 
 function addon:RestorePetActions(profile, check, cache, res)
-    if not HasPetSpells() or not profile.petActions then
+    if not C_SpellBook.HasPetSpells() or not profile.petActions then
         return 0, 0
     end
 
@@ -999,8 +999,8 @@ function addon:PreloadSpellbook(spells, flyouts)
     for book = 1, GetNumSpellTabs() do
         local offset, count, _, spec = select(3, GetSpellTabInfo(book))
 
-        if spec == 0 then
-            table.insert(tabs, { type = BOOKTYPE_SPELL, offset = offset, count = count })
+        if not spec then
+            table.insert(tabs, { type = Enum.SpellBookSpellBank.Player, offset = offset, count = count })
         end
     end
 
@@ -1009,7 +1009,7 @@ function addon:PreloadSpellbook(spells, flyouts)
         if prof then
             local count, offset = select(5, GetProfessionInfo(prof))
 
-            table.insert(tabs, { type = BOOKTYPE_PROFESSION, offset = offset, count = count })
+            table.insert(tabs, { type = Enum.SpellBookSpellBank.Player, offset = offset, count = count })
         end
     end
 
@@ -1017,10 +1017,10 @@ function addon:PreloadSpellbook(spells, flyouts)
     for tab in table.s2k_values(tabs) do
         local index
         for index = tab.offset + 1, tab.offset + tab.count do
-            local type, id = GetSpellBookItemInfo(index, tab.type)
-            local name = GetSpellBookItemName(index, tab.type)
+            local type, id = C_SpellBook.GetSpellBookItemType(index, tab.type)
+            local name = C_SpellBook.GetSpellBookItemName(index, tab.type)
 
-            if type == "FLYOUT" then
+            if type == Enum.SpellBookItemType.Flyout then
                 self:UpdateCache(flyouts, index, id, name)
                 -- Handle FLYOUTS that actually contain spells
                 local name, description, numSlots, isKnown = GetFlyoutInfo(id)
@@ -1029,7 +1029,7 @@ function addon:PreloadSpellbook(spells, flyouts)
                     self:UpdateCache(spells, flyoutid, flyoutid, spellName)
                 end
 
-            elseif type == "SPELL" then
+            elseif type == Enum.SpellBookItemType.Spell then
                 self:UpdateCache(spells, id, id, name)
             end
         end
@@ -1188,9 +1188,9 @@ function addon:PreloadMacros(macros)
 end
 
 function addon:PreloadPetSpells(spells)
-    if HasPetSpells() then
+    if C_SpellBook.HasPetSpells() then
         local index
-        for index = 1, HasPetSpells() do
+        for index = 1, C_SpellBook.HasPetSpells() do
             local id = select(2, GetSpellBookItemInfo(index, BOOKTYPE_PET))
             local name = GetSpellBookItemName(index, BOOKTYPE_PET)
             local token = bit.band(id, 0x80000000) == 0 and bit.rshift(id, 24) ~= 1
@@ -1207,9 +1207,11 @@ function addon:PreloadPetSpells(spells)
 end
 
 function addon:ClearSlot(slot)
-    ClearCursor()
-    PickupAction(slot)
-    ClearCursor()
+    if not InCombatLockdown() then
+        ClearCursor()
+        PickupAction(slot)
+        ClearCursor()
+    end
 end
 
 function addon:PlaceToSlot(slot)
@@ -1232,7 +1234,7 @@ function addon:PlaceSpell(slot, id, link, count)
     count = count or ABP_PICKUP_RETRY_COUNT
 
     ClearCursor()
-    PickupSpell(id)
+    C_Spell.PickupSpell(id)
 
     if not CursorHasSpell() then
         if count > 0 then
@@ -1251,7 +1253,7 @@ function addon:PlaceSpellBookItem(slot, id, tab, link, count)
     count = count or ABP_PICKUP_RETRY_COUNT
 
     ClearCursor()
-    PickupSpellBookItem(id, tab)
+    C_SpellBook.PickupSpellBookItem(id, Enum.SpellBookSpellBank.Player)
 
     if not CursorHasSpell() then
         if count > 0 then
@@ -1268,7 +1270,7 @@ end
 
 function addon:PlaceFlyout(slot, id, tab, link, count)
     ClearCursor()
-    PickupSpellBookItem(id, tab)
+    C_SpellBook.PickupSpellBookItem(id, Enum.SpellBookSpellBank.Player)
 
     self:PlaceToSlot(slot)
 end
@@ -1398,7 +1400,7 @@ end
 
 function addon:PlacePetSpell(slot, id, link, count)
     ClearCursor()
-    PickupSpellBookItem(id, BOOKTYPE_PET)
+    C_SpellBook.PickupSpellBookItem(id, Enum.SpellBookSpellBank.Pet)
 
     self:PlaceToPetSlot(slot)
 end

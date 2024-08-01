@@ -3,6 +3,8 @@ local addonName, addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(addonName)
 local DEBUG = "|cffff0000Debug:|r "
 
+local GetSpellLink = C_Spell and C_Spell.GetSpellLink or GetSpellLink
+
 function addon:GuessName(name)
     local list = self.db.profile.list
 
@@ -210,8 +212,12 @@ function addon:SaveActions(profile)
             end
 
         elseif type == "macro" then
-            if id > 0 then
-                local name, icon, body = GetMacroInfo(id)
+            -- HACK workaround until GetActionInfo is fixed for Macros
+            local macroname = GetActionText(slot)
+            -- if id > 0 then
+            if macroname then
+                -- local name, icon, body = GetMacroInfo(id)
+                local name, icon, body = GetMacroInfo(macroname)
 
                 icon = icon or ABP_EMPTY_ICON_TEXTURE_ID
 
@@ -385,7 +391,7 @@ end
 function addon:SavePetActions(profile)
     local petActions = nil
 
-    if HasPetSpells() then
+    if C_SpellBook.HasPetSpells() then
         local petSpells = {}
 
         local index

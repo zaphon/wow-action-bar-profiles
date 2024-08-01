@@ -89,7 +89,7 @@ function frame:SetProfile(name)
     end
 
     if not name then
-        if not HasPetSpells() then
+        if not C_SpellBook.HasPetSpells() then
             self.OptionPetActions:Disable()
             _G[self:GetName() .. "OptionPetActionsText"]:SetTextColor(GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b)
         end
