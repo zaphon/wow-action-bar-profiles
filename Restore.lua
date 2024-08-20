@@ -5,6 +5,31 @@ local DEBUG = "|cffff0000Debug:|r "
 
 local S2KFI = LibStub("LibS2kFactionalItems-1.0")
 
+local GetSpellTabInfo = function(index)
+    local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(index);
+    if skillLineInfo then
+        return  skillLineInfo.name,
+                skillLineInfo.iconID,
+                skillLineInfo.itemIndexOffset,
+                skillLineInfo.numSpellBookItems,
+                skillLineInfo.isGuild,
+                skillLineInfo.offSpecID,
+                skillLineInfo.shouldHide,
+                skillLineInfo.specID;
+    end
+end
+
+local GetSpellInfo = function(spellID)
+    if not spellID then
+        return nil;
+    end
+
+    local spellInfo = C_Spell.GetSpellInfo(spellID);
+    if spellInfo then
+        return spellInfo.name, nil, spellInfo.iconID, spellInfo.castTime, spellInfo.minRange, spellInfo.maxRange, spellInfo.spellID, spellInfo.originalIconID;
+    end
+end
+
 function addon:GetProfiles(filter, case)
     local list = self.db.profile.list
     local sorted = {}
@@ -863,7 +888,7 @@ function addon:GetFromCache(cache, id, name, link)
     end
 
     if cache.name and name and cache.name[name] then
-        self:cPrintf(link, DEBUG .. L.msg_found_by_name, link)
+        --self:cPrintf(link, DEBUG .. L.msg_found_by_name, link)
         return cache.name[name]
     end
 end
@@ -996,7 +1021,7 @@ function addon:PreloadSpellbook(spells, flyouts)
     local tabs = {}
 
     local book
-    for book = 1, GetNumSpellTabs() do
+    for book = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local offset, count, _, spec = select(3, GetSpellTabInfo(book))
 
         if not spec then
@@ -1191,8 +1216,8 @@ function addon:PreloadPetSpells(spells)
     if C_SpellBook.HasPetSpells() then
         local index
         for index = 1, C_SpellBook.HasPetSpells() do
-            local id = select(2, GetSpellBookItemInfo(index, BOOKTYPE_PET))
-            local name = GetSpellBookItemName(index, BOOKTYPE_PET)
+            local id = select(2, C_SpellBook.GetSpellBookItemType(index, Enum.SpellBookSpellBank.Pet))
+            local name = C_SpellBook.GetSpellBookItemName(index, Enum.SpellBookSpellBank.Pet)
             local token = bit.band(id, 0x80000000) == 0 and bit.rshift(id, 24) ~= 1
 
             id = bit.band(id, 0xFFFFFF)

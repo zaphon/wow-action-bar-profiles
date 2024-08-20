@@ -12,6 +12,15 @@ local ABP_tabNum
 
 local CopyAttempts = 0
 
+local UnitAura = function(unitToken, index, filter)
+    local auraData = C_UnitAuras.GetAuraDataByIndex(unitToken, index, filter);
+    if not auraData then
+        return nil;
+    end
+
+    return AuraUtil.UnpackAuraData(auraData);
+end
+
 function ABP_GetPaperDollSideBarFrame(index)
     if index == ABP_tabNum then
         return PaperDollActionBarProfilesPane;
@@ -203,9 +212,9 @@ function addon:OnInitialize()
                 self.auraTimer = nil
 
                 local checkAura = {
-                    ({ GetSpellInfo(ABP_TOME_OF_CLEAR_MIND_SPELL_ID) })[1],
-                    ({ GetSpellInfo(ABP_TOME_OF_TRANQUIL_MIND_SPELL_ID) })[1],
-                    ({ GetSpellInfo(ABP_DUNGEON_PREPARE_SPELL_ID) })[1],
+                    C_Spell.GetSpellInfo(ABP_TOME_OF_CLEAR_MIND_SPELL_ID).name,
+                    C_Spell.GetSpellInfo(ABP_TOME_OF_TRANQUIL_MIND_SPELL_ID).name,
+                    C_Spell.GetSpellInfo(ABP_DUNGEON_PREPARE_SPELL_ID).name,
                 }
 
                 local state, index

@@ -5,6 +5,21 @@ local DEBUG = "|cffff0000Debug:|r "
 
 local GetSpellLink = C_Spell and C_Spell.GetSpellLink or GetSpellLink
 
+local GetSpellTabInfo = function(index)
+    local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(index);
+    if skillLineInfo then
+        return  skillLineInfo.name,
+                skillLineInfo.iconID,
+                skillLineInfo.itemIndexOffset,
+                skillLineInfo.numSpellBookItems,
+                skillLineInfo.isGuild,
+                skillLineInfo.offSpecID,
+                skillLineInfo.shouldHide,
+                skillLineInfo.specID;
+    end
+end
+
+
 function addon:GuessName(name)
     local list = self.db.profile.list
 
@@ -115,23 +130,23 @@ function addon:SaveActions(profile)
     local flyouts, tsNames, tsIds = {}, {}, {}
 
     local book
-    for book = 1, GetNumSpellTabs() do
+    for book = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local offset, count, _, spec = select(3, GetSpellTabInfo(book))
 
-        if spec == 0 then
+        if spec == nil then
             local index
             for index = offset + 1, offset + count do
-                local type, id = GetSpellBookItemInfo(index, BOOKTYPE_SPELL)
-                local name = GetSpellBookItemName(index, BOOKTYPE_SPELL)
+                local type, id = C_SpellBook.GetSpellBookItemType(index, Enum.SpellBookSpellBank.Player)
+                local name = C_SpellBook.GetSpellBookItemName(index, Enum.SpellBookSpellBank.Player)
 
-                if type == "FLYOUT" then
+                if type == Enum.SpellBookItemType.Flyout then
                     flyouts[id] = name
 
-                elseif type == "SPELL" and IsTalentSpell(index, BOOKTYPE_SPELL) then
+                elseif type == Enum.SpellBookItemType.Spell and C_SpellBook.IsClassTalentSpellBookItem(index, Enum.SpellBookSpellBank.Player) then
                     tsNames[name] = id
 
                 -- in case a PvP Talent ever shows up in a spellbook
-                elseif type == "SPELL" and IsPvpTalentSpell(index, BOOKTYPE_SPELL) then
+                elseif type == Enum.SpellBookItemType.Spell and C_SpellBook.IsPvPTalentSpellBookItem(index, Enum.SpellBookSpellBank.Player) then
                     tsNames[name] = id
                 end
             end
@@ -286,20 +301,20 @@ function addon:SaveSingleAction(slot)
     for book = 1, GetNumSpellTabs() do
         local offset, count, _, spec = select(3, GetSpellTabInfo(book))
 
-        if spec == 0 then
+        if spec == nil then
             local index
             for index = offset + 1, offset + count do
-                local type, id = GetSpellBookItemInfo(index, BOOKTYPE_SPELL)
-                local name = GetSpellBookItemName(index, BOOKTYPE_SPELL)
+                local type, id = C_SpellBook.GetSpellBookItemType(index, Enum.SpellBookSpellBank.Player)
+                local name = C_SpellBook.GetSpellBookItemName(index, Enum.SpellBookSpellBank.Player)
 
-                if type == "FLYOUT" then
+                if type == Enum.SpellBookItemType.Flyout then
                     flyouts[id] = name
 
-                elseif type == "SPELL" and IsTalentSpell(index, BOOKTYPE_SPELL) then
+                elseif type == Enum.SpellBookItemType.Spell and C_SpellBook.IsClassTalentSpellBookItem(index, Enum.SpellBookSpellBank.Player) then
                     tsNames[name] = id
 
                 -- in case a PvP Talent ever shows up in a spellbook
-                elseif type == "SPELL" and IsPvpTalentSpell(index, BOOKTYPE_SPELL) then
+                elseif type == Enum.SpellBookItemType.Spell and C_SpellBook.IsPvPTalentSpellBookItem(index, Enum.SpellBookSpellBank.Player) then
                     tsNames[name] = id
                 end
             end
@@ -395,9 +410,9 @@ function addon:SavePetActions(profile)
         local petSpells = {}
 
         local index
-        for index = 1, HasPetSpells() do
-            local id = select(2, GetSpellBookItemInfo(index, BOOKTYPE_PET))
-            local name = GetSpellBookItemName(index, BOOKTYPE_PET)
+        for index = 1, C_SpellBook.HasPetSpells() do
+            local id = select(2, C_SpellBook.GetSpellBookItemType(index, Enum.SpellBookSpellBank.Pet))
+            local name = C_SpellBook.GetSpellBookItemName(index, Enum.SpellBookSpellBank.Pet)
 
             id = bit.band(id, 0xFFFFFF)
 
