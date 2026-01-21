@@ -1,4 +1,4 @@
-## Interface: 100000
+## Interface: 100000, 120000, 120001
 ## Title: Action Bar Profiles
 ## Author: silencer2k@gmail.com
 ## SavedVariables: ActionBarProfilesDBv3
