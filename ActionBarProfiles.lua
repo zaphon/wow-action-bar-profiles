@@ -204,32 +204,41 @@ function addon:OnInitialize()
 
     self:RegisterEvent("UNIT_AURA", function(event, target)
         if target == "player" then
-            if self.auraTimer then
-                self:CancelTimer(self.auraTimer)
-            end
+            if not InCombatLockdown() then
+                if self.auraTimer then
+                    self:CancelTimer(self.auraTimer)
+                end
 
-            self.auraTimer = self:ScheduleTimer(function()
-                self.auraTimer = nil
+                -- Cache spell IDs (safe constants)
+                local clearMindID    = ABP_TOME_OF_CLEAR_MIND_SPELL_ID
+                local tranquilMindID = ABP_TOME_OF_TRANQUIL_MIND_SPELL_ID
+                local dungeonPrepID  = ABP_DUNGEON_PREPARE_SPELL_ID
 
-                local checkAura = {
-                    C_Spell.GetSpellInfo(ABP_TOME_OF_CLEAR_MIND_SPELL_ID).name,
-                    C_Spell.GetSpellInfo(ABP_TOME_OF_TRANQUIL_MIND_SPELL_ID).name,
-                    C_Spell.GetSpellInfo(ABP_DUNGEON_PREPARE_SPELL_ID).name,
-                }
+                self.auraTimer = self:ScheduleTimer(function()
+                    self.auraTimer = nil
 
-                local state, index
-                for index = 1, 40 do
-                        local aura = UnitAura("player", index)
-                        if aura and (aura == checkAura[1] or aura == checkAura[2] or aura == checkAura[3]) then
+                    local state = false
+                    local i = 1
+                    while true do
+                        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+                        if not aura then break end
+
+                        local spellId = aura.spellId
+                        if not issecretvalue(spellId) and
+                           (spellId == clearMindID or spellId == tranquilMindID or spellId == dungeonPrepID) then
                             state = true
+                            break  -- Found ? no need to scan the rest
                         end
-                end
 
-                if state ~= self.auraState then
-                    self.auraState = state
-                    self:UpdateGUI()
-                end
-            end, 0.1)
+                        i = i + 1
+                    end
+
+                    if state ~= self.auraState then
+                        self.auraState = state
+                        self:UpdateGUI()
+                    end
+                end, 0.1)
+            end
         end
     end)
 end
