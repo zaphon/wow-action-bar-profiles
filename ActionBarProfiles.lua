@@ -475,12 +475,10 @@ function addon:InjectPaperDollSidebarTab(name, frame, icon, texCoords)
 
     self:LineUpPaperDollSidebarTabs()
 
-    if not self.prevSetLevel then
-        self.prevSetLevel = PaperDollFrame_SetLevel
+    if not self.hookedSetLevel then
+        self.hookedSetLevel = true
 
-        PaperDollFrame_SetLevel = function(...)
-            self.prevSetLevel(...)
-
+        hooksecurefunc("PaperDollFrame_SetLevel", function()
             local extra = #PAPERDOLL_SIDEBARS - ABP_DEFAULT_PAPERDOLL_NUM_TABS
 
             if CharacterFrameInsetRight:IsVisible() then
@@ -496,7 +494,7 @@ function addon:InjectPaperDollSidebarTab(name, frame, icon, texCoords)
                     end
                 end
             end
-        end
+        end)
     end
 end
 
