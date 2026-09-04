@@ -12,20 +12,13 @@ local ABP_tabNum
 
 local CopyAttempts = 0
 
-local UnitAura = function(unitToken, index, filter)
-    local auraData = C_UnitAuras.GetAuraDataByIndex(unitToken, index, filter);
-    if not auraData then
-        return nil;
-    end
-
-    return AuraUtil.UnpackAuraData(auraData);
-end
-
 function ABP_GetPaperDollSideBarFrame(index)
     if index == ABP_tabNum then
-        return PaperDollActionBarProfilesPane;
-    else
-        return origGetPaperDollSideBarFrame(index);
+        return PaperDollActionBarProfilesPane
+    end
+
+    if origGetPaperDollSideBarFrame then
+        return origGetPaperDollSideBarFrame(index)
     end
 end
 
@@ -68,11 +61,7 @@ function addon:CopyBar6To13()
         end
     end
 
-    print("Found6: "..found6)
-    print("Found13: "..found13)
-
     if found6 > found13 then
-        print("Copying Bars from 6 to 13")
         local cache = addon:MakeCache()
         for i = 13, 24 do
             local action = addon:SaveSingleAction(i)
@@ -145,8 +134,11 @@ function addon:OnInitialize()
     self.icon = LibStub("LibDBIcon-1.0")
     self.icon:Register(addonName, self.ldb, self.db.profile.minimap)
 
-    origGetPaperDollSideBarFrame = GetPaperDollSideBarFrame
-    GetPaperDollSideBarFrame = ABP_GetPaperDollSideBarFrame
+    -- Never re-wrap ourselves (re-init / dual load would recurse forever).
+    if GetPaperDollSideBarFrame ~= ABP_GetPaperDollSideBarFrame then
+        origGetPaperDollSideBarFrame = GetPaperDollSideBarFrame
+        GetPaperDollSideBarFrame = ABP_GetPaperDollSideBarFrame
+    end
 
     -- char frame
     if PaperDollActionBarProfilesPane then
@@ -202,45 +194,9 @@ function addon:OnInitialize()
         self:UpdateGUI()
     end)
 
-    self:RegisterEvent("UNIT_AURA", function(event, target)
-        if target == "player" then
-            if not InCombatLockdown() then
-                if self.auraTimer then
-                    self:CancelTimer(self.auraTimer)
-                end
-
-                -- Cache spell IDs (safe constants)
-                local clearMindID    = ABP_TOME_OF_CLEAR_MIND_SPELL_ID
-                local tranquilMindID = ABP_TOME_OF_TRANQUIL_MIND_SPELL_ID
-                local dungeonPrepID  = ABP_DUNGEON_PREPARE_SPELL_ID
-
-                self.auraTimer = self:ScheduleTimer(function()
-                    self.auraTimer = nil
-
-                    local state = false
-                    local i = 1
-                    while true do
-                        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-                        if not aura then break end
-
-                        local spellId = aura.spellId
-                        if not issecretvalue(spellId) and
-                           (spellId == clearMindID or spellId == tranquilMindID or spellId == dungeonPrepID) then
-                            state = true
-                            break  -- Found ? no need to scan the rest
-                        end
-
-                        i = i + 1
-                    end
-
-                    if state ~= self.auraState then
-                        self.auraState = state
-                        self:UpdateGUI()
-                    end
-                end, 0.1)
-            end
-        end
-    end)
+    -- UNIT_AURA is not registered. Midnight secrets: C_UnitAuras.GetAuraDataByIndex
+    -- cannot be used from tainted addon code, and auraState was only consumed by
+    -- RestoreTalents / RestorePvpTalents, which are already disabled in UseProfile.
 end
 
 function addon:ParseArgs(message)
@@ -478,22 +434,32 @@ function addon:InjectPaperDollSidebarTab(name, frame, icon, texCoords)
     if not self.hookedSetLevel then
         self.hookedSetLevel = true
 
+        -- IMPORTANT: Blizzard's SetLevel always resets CharacterLevelText to x=0.
+        -- We must apply an absolute offset (idempotent). The old code subtracted
+        -- from the current x every call, which drifts and can thrash layout if
+        -- SetLevel is invoked repeatedly during UI loads.
         hooksecurefunc("PaperDollFrame_SetLevel", function()
-            local extra = #PAPERDOLL_SIDEBARS - ABP_DEFAULT_PAPERDOLL_NUM_TABS
-
-            if CharacterFrameInsetRight:IsVisible() then
-                local index
-                for index = 1, CharacterLevelText:GetNumPoints() do
-                    local point, relTo, relPoint, x, y = CharacterLevelText:GetPoint(index)
-
-                    if point == "CENTER" then
-                        CharacterLevelText:SetPoint(
-                            point, relTo, relPoint,
-                            x - (20 + 10 * extra), y
-                        )
-                    end
-                end
+            if addon.adjustingLevelText then
+                return
             end
+
+            local extra = #PAPERDOLL_SIDEBARS - ABP_DEFAULT_PAPERDOLL_NUM_TABS
+            if extra <= 0 then
+                return
+            end
+            if not (CharacterFrameInsetRight and CharacterFrameInsetRight:IsVisible()) then
+                return
+            end
+            if not CharacterLevelText then
+                return
+            end
+
+            addon.adjustingLevelText = true
+            local y = (CharacterTrialLevelErrorText and CharacterTrialLevelErrorText:IsShown()) and -36 or -42
+            local x = -(20 + 10 * extra)
+            -- Absolute point (Blizzard resets to x=0 every SetLevel). Do not subtract from current x.
+            CharacterLevelText:SetPoint("CENTER", PaperDollFrame, "TOP", x, y)
+            addon.adjustingLevelText = false
         end)
     end
 end

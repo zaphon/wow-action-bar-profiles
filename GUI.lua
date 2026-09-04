@@ -32,7 +32,7 @@ function frame:OnUpdate()
     local class = select(2, UnitClass("player"))
 
     local button
-    for button in table.s2k_values(self.buttons) do
+    for button in table.s2k_values(self.buttons or {}) do
         if button:IsMouseOver() then
             if button.name then
                 if button.UnfavButton:IsShown() or button.class ~= class then

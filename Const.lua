@@ -9,6 +9,15 @@ ABP_DEFAULT_PAPERDOLL_NUM_TABS = 3
 ABP_PICKUP_RETRY_COUNT = 5
 ABP_PICKUP_RETRY_INTERVAL = 0.1
 
+-- Patch 12.1+: Blizzard moved these off the global namespace into MacroConsts.
+-- Keep addon code working whether the old globals or the new table is present.
+MAX_ACCOUNT_MACROS = MAX_ACCOUNT_MACROS
+    or (MacroConsts and MacroConsts.MAX_ACCOUNT_MACROS)
+    or 120
+MAX_CHARACTER_MACROS = MAX_CHARACTER_MACROS
+    or (MacroConsts and MacroConsts.MAX_CHARACTER_MACROS)
+    or 30
+
 ABP_EMPTY_ICON_TEXTURE_ID = 134400
 ABP_RANDOM_MOUNT_SPELL_ID = 150544
 
